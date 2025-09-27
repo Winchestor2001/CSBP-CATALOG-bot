@@ -27,10 +27,11 @@ SECRET_KEY = 'django-insecure-wg1#3os1+&-6_iyvq+nh6og(ihg#xcxvjf9x%1y-gcupe*mr4$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["csbp-catalog.api.dizel.online", "localhost", "127.0.0.1"]
-CORS_ALLOWED_ORIGINS = [
-    "https://casual-store.netlify.app",
-]
+ALLOWED_HOSTS = ["time2buy.api.dizel.online", "localhost", "127.0.0.1"]
+# CORS_ALLOWED_ORIGINS = [
+#     "https://casual-store.netlify.app",
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
@@ -48,6 +49,8 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     'tinymce',
     'corsheaders',
+    'unfold.contrib.import_export',
+    'import_export',
 
     'shop',
     'users',
@@ -149,7 +152,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "CSBP Catalog API",
+    "TITLE": "time2buy API",
     "DESCRIPTION": "OpenAPI спецификация для WebApp (категории, товары, баннеры, корзина).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,  # чтобы не светить schema в swagger payload
@@ -157,12 +160,12 @@ SPECTACULAR_SETTINGS = {
     "AUTHENTICATION_WHITELIST": [],
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api",  # документировать только наши API
-    "CONTACT": {"name": "CSBP Catalog team"},
+    "CONTACT": {"name": "time2buy team"},
 }
 
 UNFOLD = {
-    "SITE_TITLE": "CSBP Catalog Admin",
-    "SITE_HEADER": "CSBP Catalog — админка",
+    "SITE_TITLE": "time2buy Admin",
+    "SITE_HEADER": "time2buy — админка",
     "SITE_URL": "/admin/",
     "SITE_SYMBOL": "shopping_bag",
     "COLORS": {

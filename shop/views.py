@@ -1,19 +1,24 @@
+from decimal import Decimal
+
+from django.db import transaction
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, filters, status
 from rest_framework.response import Response
 from django.db.models import Prefetch, QuerySet
+from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
 from bot.config import BOT_TOKEN
+from core.utils import notify_admins
 from users.models import TelegramUser
-from .models import Category, Product, Banner, CartItem, InfoPage
+from .models import Category, Product, Banner, CartItem, InfoPage, OrderItem, Order
 from .pagination import DefaultPagination
 from .serializers import (
     CategorySerializer, CategoryFlatSerializer,
     ProductSerializer, BannerSerializer, CartItemSerializer,
     InfoPageSerializer, CheckoutResponseSerializer, CheckoutRequestSerializer, CartChangeQuantitySerializer,
     CartDeleteItemSerializer, CartClearSerializer, TelegramWebAppAuthRequestSerializer,
-    TelegramWebAppAuthResponseSerializer,
+    TelegramWebAppAuthResponseSerializer, OrderSerializer,
 )
 from .telegram_auth import verify_telegram_init_data
 
@@ -192,27 +197,69 @@ class CartClearView(APIView):
 
 class CheckoutView(generics.CreateAPIView):
     """
-    POST /api/cart/checkout/ {user_id, seller_username?}
+    POST /api/cart/checkout/
+    body: { user_id: "..." }
     """
     serializer_class = CheckoutRequestSerializer
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
+        summary="Оформление заказа из всей корзины пользователя",
         request=CheckoutRequestSerializer,
-        responses={200: CheckoutResponseSerializer},
+        responses={200: OrderSerializer, 400: dict},
+        tags=["cart"],
     )
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user_id = ser.validated_data["user_id"]
 
-        user_id = serializer.validated_data["user_id"]
-        seller_username = serializer.validated_data.get("seller_username")
+        # найдём TG-пользователя (если не был сохранён — создадим «пустышку»)
+        tg_user, _ = TelegramUser.objects.get_or_create(tg_id=int(user_id))
 
-        items = CartItem.objects.filter(user_id=user_id).select_related("product")
-        payload = CartItemSerializer(items, many=True, context={"request": request}).data
-        link = f"https://t.me/{seller_username}" if seller_username else None
+        # корзина
+        items_qs = CartItem.objects.filter(user_id=user_id).select_related("product")
+        items = list(items_qs)
+        if not items:
+            return Response({"detail": "Корзина пуста."}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"cart": payload, "redirect_to": link}, status=status.HTTP_200_OK)
+        # заказ
+        order = Order.objects.create(tg_user=tg_user)
+
+        total = Decimal("0")
+        bulk = []
+        for ci in items:
+            price = ci.product.price or Decimal("0")
+            total += price * ci.quantity
+            bulk.append(OrderItem(order=order, product=ci.product, quantity=ci.quantity, price=price))
+        OrderItem.objects.bulk_create(bulk)
+        order.total_amount = total
+        order.save(update_fields=["total_amount"])
+
+        # чистим корзину
+        items_qs.delete()
+
+        # уведомление админам
+        try:
+            admin_url = request.build_absolute_uri(reverse("admin:shop_order_change", args=[order.id]))
+        except Exception:
+            admin_url = f"(admin link unavailable, id={order.id})"
+
+        username = tg_user.username and f"@{tg_user.username.lstrip('@')}" or "—"
+        notify_admins(
+            "\n".join(
+                [
+                    f"🆕 <b>Новый заказ #{order.id}</b>",
+                    f"👤 tg_id: <code>{tg_user.tg_id}</code> | {username}",
+                    f"🧾 позиций: {len(bulk)}",
+                    f"💰 сумма: <b>{order.total_amount}</b>",
+                    f"🔗 {admin_url}",
+                ]
+            )
+        )
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
 # --- InfoPage на generics (если используешь) ---
 

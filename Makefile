@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PROJECT_NAME = csbp-catalog
+PROJECT_NAME = time2buy
 DJANGO_SERVICE = $(PROJECT_NAME)-django
 BOT_SERVICE = $(PROJECT_NAME)-bot
 

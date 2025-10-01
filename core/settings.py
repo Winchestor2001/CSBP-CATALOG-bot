@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "time2buy API",
+    "TITLE": "CASUAL STORE API",
     "DESCRIPTION": "OpenAPI спецификация для WebApp (категории, товары, баннеры, корзина).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,  # чтобы не светить schema в swagger payload
@@ -161,7 +161,7 @@ SPECTACULAR_SETTINGS = {
     "AUTHENTICATION_WHITELIST": [],
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api",  # документировать только наши API
-    "CONTACT": {"name": "time2buy team"},
+    "CONTACT": {"name": "CASUAL STORE team"},
 }
 
 from core.unfold_config import UNFOLD

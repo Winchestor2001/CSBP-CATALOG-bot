@@ -1,8 +1,8 @@
 from core.utils import get_reverse_link
 
 UNFOLD = {
-    "SITE_TITLE": "time2buy Admin",
-    "SITE_HEADER": "time2buy — админка",
+    "SITE_TITLE": "CASUAL STORE Admin",
+    "SITE_HEADER": "CASUAL STORE — админка",
     "SITE_URL": "/admin/",
     "SITE_SYMBOL": "shopping_bag",
     "COLORS": {

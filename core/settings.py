@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wg1#3os1+&-6_iyvq+nh6og(ihg#xcxvjf9x%1y-gcupe*mr4$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["time2buy.api.dizel.online", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["csbp-catalog.api.dizel.online", "localhost", "127.0.0.1"]
 # CORS_ALLOWED_ORIGINS = [
 #     "https://casual-store.netlify.app",
 # ]
